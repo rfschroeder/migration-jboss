@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html>
+    <head>
+        <title>TOTVS CHAT - JBoss EAP 6.4</title>
+        <link rel="stylesheet" type="text/css" href="resources/css/hello.css" />        
+		<script type="text/javascript">
+            var websocket = null;
+			
+			function connect() {
+				var nickname = document.getElementById('nickname').value;
+                var wsURI = 'ws://' + window.location.host + '/websocket-chat/websocket/saySomething/' + nickname;
+                websocket = new WebSocket(wsURI);
+
+                websocket.onopen = function() {
+                    displayStatus('Open');
+                    document.getElementById('connect').disabled = true;					
+					document.getElementById('disconnect').disabled = false;	
+					document.getElementById('sendMessage').disabled = false;
+					document.getElementById('text').disabled = false;
+                    displayMessage('Seja bem vindo ' + nickname + "!");
+                };
+                websocket.onmessage = function(event) {
+                    displayMessage(event.data);
+                };
+                websocket.onerror = function(event) {
+                    // log the event
+                    displayMessage('Error! ' + event.data);
+                };
+                websocket.onclose = function() {
+                    displayStatus('Closed');
+                    displayMessage('The connection was closed or timed out. Please click the Open Connection button to reconnect.');
+                    document.getElementById('sendMessage').disabled = true;
+					document.getElementById('text').disabled = true;
+					document.getElementById('connect').disabled = true;
+					document.getElementById('disconnect').disabled = false;
+                };
+            }
+
+            function disconnect() {
+                if (websocket !== null) {
+                    websocket.close();
+                    websocket = null;
+                }
+                message.setAttribute("class", "message");
+                message.value = 'WebSocket closed.';
+                // log the event
+            }
+
+            function sendMessage() {
+                if (websocket !== null) {
+                    var content = document.getElementById('text').value;
+                    websocket.send(content);                    
+                } else {
+                    displayMessage('WebSocket connection is not established. Please click the Open Connection button.');
+                }
+				document.getElementById('text').value = "";
+            }
+
+            function displayMessage(data) {
+                var message = document.getElementById('messages');                
+				if (message.value !== "")
+					message.value = message.value + "\n" + data;
+				else
+					message.value = data;
+            }
+
+            function displayStatus(status) {
+                var currentStatus = document.getElementById('currentstatus');
+                currentStatus.value = status;
+            }
+			
+			function onNickNameChange() {
+				if (document.getElementById("nickname").value!="") {
+					document.getElementById("connect").disabled = false;
+					document.getElementById("connect").focus();
+				} else {
+					document.getElementById("connect").disabled = true;
+					document.getElementById("connect").focus();
+				}
+				
+			}
+        </script>
+    </head>
+    <body>		
+        <div>
+            <div id="connect-container">
+				<div>
+                    <fieldset>
+                        <legend>Digite o seu nickname:</legend>
+						<input id="nickname" type="text" size="40" style="width: 10%" onchange="onNickNameChange()"/>                        
+                    </fieldset>
+                </div>
+                <div>
+                    <fieldset>
+                        <legend>Conectar ou disconectar do chat:</legend>
+                        <input type="button" id="connect" onclick="connect();" value="Entrar no chat" disabled="disabled" />
+                        <input type="button" id="disconnect" onclick="disconnect();" value="Sair do chat" disabled="disabled" />
+                    </fieldset>
+                </div>
+                <div>Status atual do chat: <output id="currentstatus" class="message">Closed</output></div>
+                <div>
+					<textarea rows="20" cols="150" id="messages" readonly></textarea>
+                </div>
+				<div>
+                    <fieldset>
+                        <legend>Escreva sua mensagem abaixo:</legend>                        
+						<input id="text" type="text" size="40" style="width: 40%" />
+						<input type="button" id="sendMessage" onclick="sendMessage()" value="Enviar mensagem" disabled="disabled"/>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
